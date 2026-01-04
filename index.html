@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2d5016">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Wild Tracker Pro</title>
+    
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- App Icon -->
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🦁</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2d5016;
+            --primary-dark: #1a3009;
+            --secondary: #8b6914;
+            --danger: #c41e3a;
+            --success: #2d7a3e;
+            --bg: #f5f3ed;
+            --card-bg: #ffffff;
+            --text: #2a2a2a;
+            --text-light: #666;
+            --border: #d4c5a9;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 65px;
+            z-index: 999;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: white;
+            border: none;
+            font-size: 0.95em;
+            font-weight: 500;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--bg);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.95em;
+        }
+        
+        select, input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            background: white;
+        }
+        
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #75590f;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .gps-info {
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .gps-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+        
+        .gps-status.active {
+            background: var(--success);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .observation-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+        
+        .observation-card h3 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .observation-detail {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin: 4px 0;
+        }
+        
+        .observation-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .observation-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.85em;
+        }
+        
+        .filter-section {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+        
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.2em;
+            }
+            
+            .tab {
+                padding: 12px 8px;
+                font-size: 0.85em;
+            }
+            
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Offline indicator */
+        .offline-banner {
+            background: var(--danger);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            display: none;
+        }
+        
+        .offline-banner.show {
+            display: block;
+        }
+        
+        /* Leaflet Layer Control Styling */
+        .leaflet-control-layers {
+            border-radius: 8px !important;
+            border: 2px solid var(--border) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        }
+        
+        .leaflet-control-layers-expanded {
+            padding: 10px !important;
+            background: white !important;
+        }
+        
+        .leaflet-control-layers-toggle {
+            background-color: white !important;
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        /* Custom Wildlife Markers */
+        .wildlife-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+        
+        .current-location-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+        
+        /* Leaflet Popup Styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+        }
+        
+        .leaflet-popup-content {
+            margin: 15px !important;
+            font-family: inherit !important;
+        }
+        
+        /* Scale Control */
+        .leaflet-control-scale {
+            background: rgba(255,255,255,0.9) !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-banner" id="offlineBanner">
+        📡 Geen internetverbinding - Werk in aflyn modus
+    </div>
+
+    <div class="header">
+        <h1>🦁 Wild Tracker Pro</h1>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('record')">📍 Merk</button>
+        <button class="tab" onclick="switchTab('view')">🗺️ Kaart</button>
+        <button class="tab" onclick="switchTab('list')">📋 Lys</button>
+        <button class="tab" onclick="switchTab('stats')">📊 Stats</button>
+    </div>
+
+    <div class="container">
+        <!-- Record Tab -->
+        <div id="record" class="tab-content active">
+            <div class="alert" id="recordAlert"></div>
+            
+            <div class="card">
+                <div class="gps-info">
+                    <div class="gps-status" id="gpsStatus"></div>
+                    <span id="gpsText">GPS word geaktiveer...</span>
+                </div>
+                
+                <form id="recordForm">
+                    <div class="form-group">
+                        <label for="species">🦓 Spesie</label>
+                        <select id="species" required>
+                            <option value="">Kies spesie...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">📍 Ligging (GPS)</label>
+                        <input type="text" id="location" readonly placeholder="Wag vir GPS koordinate...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accuracy">🎯 GPS Akkuraatheid</label>
+                        <input type="text" id="accuracy" readonly placeholder="Akkuraatheid word bereken...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">📝 Notas (opsioneel)</label>
+                        <textarea id="notes" placeholder="Gedrag, getalle, omgewing, ens..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        💾 Stoor Waarneming
+                    </button>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="getCurrentLocation()">
+                        🔄 Verfris GPS
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Map View Tab -->
+        <div id="view" class="tab-content">
+            <div class="card">
+                <div class="alert alert-info show" style="margin-bottom: 15px;">
+                    🛰️ <strong>Wenk:</strong> Gebruik die laag kontrol (bo regs op kaart) om te wissel tussen Satelliet en Street view. 
+                    Satelliet view wys klein paatjies wat nie op gewone kaarte wys nie!
+                </div>
+                
+                <div class="filter-section">
+                    <h3 style="margin-bottom: 15px;">🔍 Filters</h3>
+                    <div class="form-group">
+                        <label for="filterSpecies">Spesie</label>
+                        <select id="filterSpecies">
+                            <option value="">Alle spesies</option>
+                        </select>
+                    </div>
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="radius">Radius (km)</label>
+                            <input type="number" id="radius" value="5" min="0.5" max="100" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="days">Laaste dae</label>
+                            <input type="number" id="days" value="30" min="1" max="365">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="updateMap()">
+                        🗺️ Wys op Kaart
+                    </button>
+                </div>
+                
+                <div id="map"></div>
+                
+                <div class="loading" id="mapLoading">
+                    <div class="spinner"></div>
+                    <p>Laai kaart...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Tab -->
+        <div id="list" class="tab-content">
+            <div class="card">
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="listFilterSpecies">Spesie</label>
+                            <select id="listFilterSpecies" onchange="filterList()">
+                                <option value="">Alle spesies</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="listFilterDays">Laaste dae</label>
+                            <select id="listFilterDays" onchange="filterList()">
+                                <option value="7">7 dae</option>
+                                <option value="30" selected>30 dae</option>
+                                <option value="90">90 dae</option>
+                                <option value="365">1 jaar</option>
+                                <option value="all">Alles</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportData()">
+                        📤 Eksporteer Data
+                    </button>
+                </div>
+                
+                <div id="observationsList"></div>
+                
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-state-icon">📭</div>
+                    <h3>Geen waarnemings</h3>
+                    <p>Begin deur wild te merk in die "Merk" tab</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats" class="tab-content">
+            <div class="stats-grid" id="statsGrid"></div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">📈 Top Spesies</h3>
+                <div id="topSpecies"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
