@@ -1,5 +1,5 @@
 // Service Worker for offline functionality
-const CACHE_NAME = 'wildlife-tracker-v3-satellite';
+const CACHE_NAME = 'wildlife-tracker-v4-satellite';
 const urlsToCache = [
   './',
   './index.html',
