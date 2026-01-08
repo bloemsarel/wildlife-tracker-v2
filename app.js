@@ -4,7 +4,6 @@
 const SPECIES_LIST = [
     'Leeu',
     'Luiperd',
-    'Tier',
     'Jagluiperd',
     'Seekoei',
     'Renoster (Wit)',
@@ -16,7 +15,6 @@ const SPECIES_LIST = [
     'Waterbok',
     'Blesbok',
     'Springbok',
-    'Impala',
     'Rooibok',
     'Gemsbok',
     'Eland',
