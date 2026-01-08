@@ -38,7 +38,11 @@ const SPECIES_LIST = [
     'Karakaal',
     'Volstruis',
     'Kori Korhaan',
-    'Pou'
+    'Pou',
+    'Swartwitpens',
+    'Nyala',
+    'Bastergemsbok',
+    'Bosbok'
 ];
 
 class WildlifeTracker {
